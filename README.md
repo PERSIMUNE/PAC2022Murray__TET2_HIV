@@ -1,6 +1,6 @@
-# PAC2022Murray__TET2_HIV
-Supporting code for the manuscript "Association between TET2 genetic variation and viral load in people living with HIV Association between TET2 genetic variation and viral load in people living with HIV"
+# Supporting code for Murray et al. 2022
 
+Supporting code for the manuscript "Association between TET2 genetic variation and viral load in people living with HIV Association between TET2 genetic variation and viral load in people living with HIV"
 
 
 | Trial    | Type of analysis                   | Old name                                | New name                                       |
@@ -24,3 +24,5 @@ Supporting code for the manuscript "Association between TET2 genetic variation a
 |          | main GLM                           | ESPRIT_TET2GLM_feb15                    | TET2manuscript_ESPRIT_GLM_main                 |
 | STALWART | Create genotype and phenotype file | STALWART_create_phenogeno_feb15         | TET2manuscript_STALWART_create_phenogeno       |
 |          | main GLM                           | STALWART_TET2GLM_feb15                  |                                                |
+
+
