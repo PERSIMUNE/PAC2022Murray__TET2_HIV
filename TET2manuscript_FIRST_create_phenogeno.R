@@ -1,0 +1,137 @@
+library(tidyverse)
+setwd("/home/projects/cu_10103/data/INSIGHT_genetics/FIRST/INPUT_FIRST_09May2018")
+
+#import basic phenotypes
+FIRST_basic <- read_tsv("basic.tsv")
+
+#import PC eigenvectors
+setwd("/home/projects/cu_10103/scratch/TET2CGA/eigenstrat_PCA")
+
+PCfile <-
+  read.table(
+    "FIRST_smartpca_probeQC_recomcutoff.pca.evec",
+    col.names = c(
+      "id",
+      "PC1",
+      "PC2",
+      "PC3",
+      "PC4",
+      "PC5",
+      "PC6",
+      "PC7",
+      "PC8",
+      "PC9",
+      "PC10",
+      "?"
+    ),
+    header = F,
+    skip = 1
+  )
+
+#remove extra id in the id column
+library(stringr)
+
+FIRSTPCA <- PCfile %>% as_tibble 
+FIRSTPCA <- separate(FIRSTPCA, col = 1, into = c("ID", "ID2"), sep = ":")
+
+#import genotype file and transform to additive format
+
+setwd("/home/projects/cu_10103/scratch/TET2CGA/plink_files")
+
+SNP_screen2tped <- read_delim("/home/projects/cu_10103/scratch/TET2CGA/plink_files/FIRST_SNPs_QCed_genericMAF_TET2_IDH12.tped", 
+                              "\t", escape_double = FALSE, col_names = FALSE, 
+                              trim_ws = TRUE)
+SNP_screen2tfam <- read_delim("/home/projects/cu_10103/scratch/TET2CGA/plink_files/FIRST_SNPs_QCed_genericMAF_TET2_IDH12.tfam", 
+                              "\t", escape_double = FALSE, col_names = FALSE, 
+                              trim_ws = TRUE)
+SNPmat <- as.matrix(SNP_screen2tped[,-c(1:4)])
+rownames(SNPmat) <- as.matrix(SNP_screen2tped[,2])
+colnames(SNPmat) <- as.matrix(SNP_screen2tfam[,1])
+SNPmat_subset <- SNPmat
+
+SNPmat_subset_ADD <-t(SNPmat_subset)
+SNPmat_subset_ADD[SNPmat_subset_ADD == "2 2"] <-0
+SNPmat_subset_ADD[SNPmat_subset_ADD == "1 2"] <-1
+SNPmat_subset_ADD[SNPmat_subset_ADD == "1 1"] <-2
+SNPmat_subset_ADD[SNPmat_subset_ADD == "0 0"] <-NA 
+str(SNPmat_subset_ADD)
+SNPmat_df <- as.data.frame(SNPmat_subset_ADD) %>% rownames_to_column(., var = "ID")
+
+FIRST_geno <- as_tibble(SNPmat_df)
+
+#join tables and create phenogeno tibble
+
+FIRST_basic$ID <- as.character(FIRST_basic$ID)
+is.character(FIRST_basic$ID)
+is.character(FIRSTPCA$ID)
+
+FIRST_pheno <- left_join(FIRST_basic, FIRSTPCA, by = "ID")
+FIRST_genopheno <- left_join(FIRST_geno, FIRST_pheno, by = "ID")
+setwd("/home/projects/cu_10103/scratch/TET2CGA/FIRST")
+write_tsv(FIRST_genopheno, "FIRST_genopheno_feb15data.tsv")
+
+##save FIRST pheno for Cameron's SKAT-O analysis
+setwd("/home/projects/cu_10103/scratch/TET2CGA/FIRST")
+FIRST_SKAT <- FIRST_pheno %>% rename(PID = ID)
+saveRDS(FIRST_SKAT, "FIRST.RDS")
+##subset main geno df with significnat SNPs from the START and FIRST associations
+#select SNPs with q value < 0.05 from START and FIRST associations
+setwd("/home/projects/cu_10103/scratch/TET2CGA/FIRST")
+FIRST_geno_sigonly <-
+  FIRST_geno %>% select(
+    "ID",
+    "AX-14431677",
+    "AX-175346011",
+    "AX-14431796",
+    "AX-34492519",
+    "AX-151531994",
+    "AX-14431777",
+    # "AX-14431755",
+    "AX-14431884",
+    "AX-14431750",
+    "AX-14431754",
+    "AX-14431783",
+    "AX-41321305",
+    "AX-14431833",
+    "AX-34492557",
+    "AX-175364028",
+    "AX-38155539",
+    "AX-14431819",
+    "AX-14431848",
+    "AX-14431808",
+    "AX-14431631",
+    "AX-14431817",
+    "AX-175367051",
+    "AX-14431804",
+    "AX-14431806",
+    "AX-14431861",
+    "AX-14431887",
+    "AX-175346090",
+    "AX-14431860",
+    "AX-14431883",
+    "AX-14431884",
+    "AX-14431860",
+    "AX-14431848",
+    "AX-14431804",
+    "AX-14431806",
+    "AX-14431783",
+    "AX-14431872",
+    "AX-14431808",
+    "AX-14431819",
+    "AX-175346090",
+    "AX-14431754",
+    "AX-151531994",
+    "AX-34492557",
+    "AX-14431847",
+    "AX-14431803",
+    "AX-14431813",
+    "AX-33487697",
+    "AX-34492391",
+    "AX-175345974"
+  )
+
+##Save 
+
+setwd("/home/projects/cu_10103/scratch/TET2CGA/Descriptive tables")
+write_tsv(FIRST_geno_sigonly, "FIRST_geno_sigonly.tsv")
+
